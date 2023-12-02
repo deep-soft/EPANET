@@ -95,7 +95,7 @@ jobs:
             echo " ... run on ${{ matrix.job.os }}";
           else
             echo " ... run on ${{ matrix.job.os }}";
-            make install
+            make epanet-output
           fi
           popd
 
