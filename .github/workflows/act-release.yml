@@ -80,26 +80,24 @@ jobs:
       - name: Configure CMake
         # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
         # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
+        shell: bash
         run: |
-          cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+          cmake -B ./build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
 
       - name: Build
         continue-on-error: true
         shell: bash
         # Build your program with the given configuration
         run: |
-          cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}};
+          pushd build
+          cmake --build . --config ${{env.BUILD_TYPE}};
           if [[ "${{ matrix.job.os }}" =~ "windows" ]]; then
             echo " ... run on ${{ matrix.job.os }}";
-            pushd build
-            make
-            popd
           else
             echo " ... run on ${{ matrix.job.os }}";
-            pushd build
-            make
-            popd
+            make install
           fi
+          popd
 
       - name: Set release directory to add to archive
         continue-on-error: true
