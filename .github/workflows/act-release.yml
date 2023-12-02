@@ -103,7 +103,7 @@ jobs:
           if [[ "${{ matrix.job.os }}" =~ "windows" ]]; then
             release_directory="build/bin/Release";
           else
-            release_directory="build/bin/";
+            release_directory="build/";
           fi
           echo "release_directory=$release_directory";
           echo "release_directory=$release_directory" >> $GITHUB_ENV;
@@ -132,7 +132,7 @@ jobs:
           directory: ${{ env.release_directory }}
           exclusions: ${{ env.ZIP_exclusions }}
           recursive_exclusions: ${{ env.ZIP_exclusions }}
-          path: "${{ env.PROG_NAME }}*"
+          path: '.'
           env_variable: 'ZIP_RELEASE_ARCHIVE'
         # archive name is ${{ env.ZIP_RELEASE_ARCHIVE }}
 
