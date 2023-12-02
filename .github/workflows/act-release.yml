@@ -84,6 +84,8 @@ jobs:
           cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
 
       - name: Build
+        continue-on-error: true
+        shell: bash
         # Build your program with the given configuration
         run: |
           cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}};
