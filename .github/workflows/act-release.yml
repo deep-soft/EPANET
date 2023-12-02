@@ -103,16 +103,21 @@ jobs:
         continue-on-error: true
         shell: bash
         run: |
+          mkdir ./release;
           if [[ "${{ matrix.job.os }}" =~ "windows" ]]; then
-            release_directory="build/bin/Release";
+            cp ./build/bin/Release/* ./release/;
           else
-            release_directory="build/";
+            mkdir ./release/bin/;
+            mkdir ./release/lib/;
+            cp ./build/bin/* ./release/bin/;
+            cp ./build/lib/* ./release/lib/;
           fi
+          release_directory="./release";
           echo "release_directory=$release_directory";
           echo "release_directory=$release_directory" >> $GITHUB_ENV;
-          echo list $release_directory - begin
-          ls -la $release_directory
-          echo list $release_directory - end
+          echo list $release_directory - begin;
+          ls -la $release_directory;
+          echo list $release_directory - end;
 
  # zip cleanup before - begin
       - name: zip cleanup
@@ -180,9 +185,7 @@ jobs:
         run: |
           if [[ "${{ env.ZIP_RELEASE_ARCHIVE     }}" != "" ]]; then rm ${{ env.ZIP_RELEASE_ARCHIVE     }} || true; fi
           if [[ "${{ env.ZIP_RELEASE_ARCHIVE_ALL }}" != "" ]]; then rm ${{ env.ZIP_RELEASE_ARCHIVE_ALL }} || true; fi
-          pushd ${{ env.release_directory }}
-             rm ${{ env.PROGRAM }}*.zip || true;
-          popd
+          if [[ "${{ env.release_directory       }}" != "" ]]; then rm ${{ env.release_directory }}/${{ env.PROGRAM }}*.zip || true; rm ${{ env.release_directory }} || true; fi
 # zip cleanup for cache - end
 
       - name: Test
