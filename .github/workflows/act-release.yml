@@ -60,9 +60,10 @@ jobs:
       - name: get program version
         shell: bash
         run: |
-          PROG_VERSION_TYPES=$(grep "CODEVERSION" "/src/types.h" | awk -F' ' '{print $3}');
+          PROG_VERSION_TYPES=$(grep "CODEVERSION" "src/types.h" | awk -F' ' '{print $3}');
           if [[ "$PROG_VERSION_TYPES" != "" ]]; then
-            VERSION=v$PROG_VERSION_TYPES;
+            #VERSION=v$PROG_VERSION_TYPES;
+            VERSION=v${PROG_VERSION_TYPES:0}.${PROG_VERSION_TYPES:2}.${PROG_VERSION_TYPES:4};
             echo "VERSION=$VERSION";
             echo "VERSION=$VERSION" >> $GITHUB_ENV;
           fi
