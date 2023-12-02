@@ -80,20 +80,30 @@ jobs:
       - name: Configure CMake
         # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
         # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
-        run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+        run: |
+          cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
 
       - name: Build
         # Build your program with the given configuration
-        run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+        run: |
+          cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+          if [[ "${{ matrix.job.os }}" =~ "windows" ]]; then
+            echo " ... run on ${{ matrix.job.os }}";
+          else
+            echo " ... run on ${{ matrix.job.os }}";
+            pushd build
+            make
+            popd
+          fi
 
       - name: Set release directory to add to archive
         continue-on-error: true
         shell: bash
         run: |
           if [[ "${{ matrix.job.os }}" =~ "windows" ]]; then
-            release_directory="build/${{ env.PROGRAM }}/Release";
+            release_directory="build/bin/Release";
           else
-            release_directory="build/${{ env.PROGRAM }}";
+            release_directory="build/bin/";
           fi
           echo "release_directory=$release_directory";
           echo "release_directory=$release_directory" >> $GITHUB_ENV;
