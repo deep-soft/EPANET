@@ -89,15 +89,11 @@ jobs:
         shell: bash
         # Build your program with the given configuration
         run: |
+          echo " ... run on ${{ matrix.job.os }}";
           pushd build
           cmake --build . --config ${{env.BUILD_TYPE}};
-          if [[ "${{ matrix.job.os }}" =~ "windows" ]]; then
-            echo " ... run on ${{ matrix.job.os }}";
-          else
-            echo " ... run on ${{ matrix.job.os }}";
-            make epanet-output
-          fi
           popd
+          echo " Done ... ${{ matrix.job.os }}";
 
       - name: Set release directory to add to archive
         continue-on-error: true
@@ -125,9 +121,9 @@ jobs:
         shell: bash
         run: |
           rm ${{ env.PROGRAM }}*.zip || true;
-          pushd ${{ env.release_directory }}
-             rm ${{ env.PROGRAM }}*.zip || true;
-          popd
+          pushd ${{ env.release_directory }};
+          rm ${{ env.PROGRAM }}*.zip || true;
+          popd;
 # zip cleanup before - end
 
 # zip release - begin
@@ -185,7 +181,7 @@ jobs:
         run: |
           if [[ "${{ env.ZIP_RELEASE_ARCHIVE     }}" != "" ]]; then rm ${{ env.ZIP_RELEASE_ARCHIVE     }} || true; fi
           if [[ "${{ env.ZIP_RELEASE_ARCHIVE_ALL }}" != "" ]]; then rm ${{ env.ZIP_RELEASE_ARCHIVE_ALL }} || true; fi
-          if [[ "${{ env.release_directory       }}" != "" ]]; then rm ${{ env.release_directory }}/${{ env.PROGRAM }}*.zip || true; rm ${{ env.release_directory }} || true; fi
+          if [[ "${{ env.release_directory       }}" != "" ]]; then rm -r ${{ env.release_directory    }} || true; fi
 # zip cleanup for cache - end
 
       - name: Test
