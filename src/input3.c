@@ -7,7 +7,7 @@ Description:  parses network data from a line of an EPANET input file
 Authors:      see AUTHORS
 Copyright:    see AUTHORS
 License:      see LICENSE
-Last Updated: 05/11/2024
+Last Updated: 02/14/2025
 ******************************************************************************
 */
 
@@ -920,10 +920,10 @@ int controldata(Project *pr)
 **  Purpose: processes simple controls
 **  Formats:
 **  [CONTROLS]
-**  LINK  linkID  setting IF NODE      nodeID {BELOW/ABOVE}  level
-**  LINK  linkID  setting AT TIME      value  (units)
-**  LINK  linkID  setting AT CLOCKTIME value  (units)
-**   (0)   (1)      (2)   (3) (4)       (5)     (6)          (7)
+**  LINK  linkID  setting IF NODE      nodeID {BELOW/ABOVE}  level (DISABLED)
+**  LINK  linkID  setting AT TIME      value  (units)  (DISABLED)
+**  LINK  linkID  setting AT CLOCKTIME value  (units)  (DISABLED)
+**   (0)   (1)      (2)   (3) (4)       (5)     (6)          (7)  (8)
 **--------------------------------------------------------------
 */
 {
@@ -932,7 +932,8 @@ int controldata(Project *pr)
 
     int          i = 0,                // Node index
                  k,                    // Link index
-                 n;                    // # data items
+                 n,                    // # data items
+                 isEnabled = TRUE;     // Control enabled
     double       setting = MISSING,    // Link setting
                  time = 0.0,           // Simulation time
                  level = 0.0;          // Pressure or tank level
@@ -944,6 +945,13 @@ int controldata(Project *pr)
     // Check for sufficient number of input tokens
     n = parser->Ntokens;
     if (n < 6) return 201;
+    
+    // Check if last token is "DISABLED"
+    if (match(parser->Tok[n-1], w_DISABLED))
+    {
+        isEnabled = FALSE;
+        n = n - 1;
+    }
 
     // Check that controlled link exists
     k = findlink(net, parser->Tok[1]);
@@ -1020,7 +1028,7 @@ int controldata(Project *pr)
     control->Time = (long)(3600.0 * time);
     if (ctltype == TIMEOFDAY) control->Time %= SECperDAY;
     control->Grade = level;
-    control->isEnabled = TRUE;
+    control->isEnabled = isEnabled;
     return 0;
 }
 
@@ -2015,7 +2023,7 @@ int optionchoice(Project *pr, int n)
 int optionvalue(Project *pr, int n)
 /*
 **-------------------------------------------------------------
-**  Input:   *line = line read from input file
+**  Input:   n = index of last input token
 **  Output:  returns error code
 **  Purpose: processes numerical value [OPTIONS] data
 **  Formats:
@@ -2162,7 +2170,42 @@ int optionvalue(Project *pr, int n)
     return 0;
 }
 
+int  tagdata(Project *pr)
+/*
+**-------------------------------------------------------------
+**  Input:   none
+**  Output:  returns error code
+**  Purpose: processes [TAGS] data
+**  Formats:
+**    NODE  id  tag
+**    LINK  id  tag
+**--------------------------------------------------------------
+*/
+{
+    Network *net = &pr->network;
+    Parser  *parser = &pr->parser;
 
+    int j, n;
+
+    // Check for sufficient data
+    n = parser->Ntokens;
+    if (n < 3) return 201;
+
+    // First keyword is NODE
+    if (match(parser->Tok[0], w_NODE))
+    {
+        if ((j = findnode(net, parser->Tok[1])) == 0) return setError(parser, 0, 203);
+        xstrcpy(&net->Node[j].Tag, parser->Tok[2], MAXMSG);
+    }
+
+    // First keyword is LINK
+    else if (match(parser->Tok[0], w_LINK))
+    {
+        if ((j = findlink(net, parser->Tok[1])) == 0) return setError(parser, 0, 203);
+        xstrcpy(&net->Link[j].Tag, parser->Tok[2], MAXMSG);
+    } 
+    return 0;   
+}    
 void changestatus(Network *net, int j, StatusType status, double y)
 /*
 **--------------------------------------------------------------

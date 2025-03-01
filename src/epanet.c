@@ -7,7 +7,7 @@
  Authors:      see AUTHORS
  Copyright:    see AUTHORS
  License:      see LICENSE
- Last Updated: 06/26/2024
+ Last Updated: 02/14/2025
  ******************************************************************************
 */
 
@@ -203,7 +203,6 @@ int DLLEXPORT EN_openX(EN_Project p, const char *inpFile,
     return openproject(p, inpFile, rptFile, outFile, TRUE);
 }    
 
-
 int DLLEXPORT EN_gettitle(EN_Project p, char *line1, char *line2, char *line3)
 /*----------------------------------------------------------------
 **  Input:   None
@@ -263,6 +262,32 @@ int  DLLEXPORT EN_setcomment(EN_Project p, int object, int index,
     return setcomment(&p->network, object, index, comment);
 }
 
+int DLLEXPORT EN_gettag(EN_Project p, int object, int index, char *tag)
+/*----------------------------------------------------------------
+**  Input:   object = either EN_NODE or EN_LINK
+**           index = the object's index
+**  Output:  tag = the tag string assigned to the object
+**  Returns: error code
+**  Purpose: Retrieves an object's tag string
+**----------------------------------------------------------------
+*/
+{
+    return gettag(&p->network, object, index, tag);
+}
+
+int  DLLEXPORT EN_settag(EN_Project p, int object, int index,
+    const char *tag)
+/*----------------------------------------------------------------
+**  Input:   object = either EN_NODE or EN_LINK
+**           index = the object's index
+**           tag =  a descriptive comment to assign
+**  Returns: error code
+**  Purpose: Assigns a tag string to an object
+**----------------------------------------------------------------
+*/
+{
+    return settag(&p->network, object, index, tag);
+}
 int DLLEXPORT EN_getcount(EN_Project p, int object, int *count)
 /*----------------------------------------------------------------
 **  Input:   object = type of object to count (see EN_CountType)
@@ -1965,6 +1990,7 @@ int DLLEXPORT EN_addnode(EN_Project p, const char *id, int nodeType, int *index)
     node->X = MISSING;
     node->Y = MISSING;
     node->Comment = NULL;
+    node->Tag = NULL;                     
 
     // Insert new node into hash table
     hashtable_insert(net->NodeHashTable, node->ID, nIdx);
@@ -2024,6 +2050,7 @@ int DLLEXPORT EN_deletenode(EN_Project p, int index, int actionCode)
     freedemands(node);
     free(node->S);
     free(node->Comment);
+    free(node->Tag);                    
 
     // Shift position of higher entries in Node & Coord arrays down one
     for (i = index; i <= net->Nnodes - 1; i++)
@@ -3383,6 +3410,7 @@ int DLLEXPORT EN_addlink(EN_Project p, const char *id, int linkType,
     link->Rpt = 0;
     link->ResultIndex = 0;
     link->Comment = NULL;
+    link->Tag = NULL;                     
     link->Vertices = NULL;
 
     hashtable_insert(net->LinkHashTable, link->ID, n);
@@ -3435,6 +3463,7 @@ int DLLEXPORT EN_deletelink(EN_Project p, int index, int actionCode)
 
     // Remove link's comment and vertices
     free(link->Comment);
+    free(link->Tag);                    
     freelinkvertices(link);
 
     // Shift position of higher entries in Link array down one

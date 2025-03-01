@@ -7,7 +7,7 @@ Description:  saves network data to an EPANET formatted text file
 Authors:      see AUTHORS
 Copyright:    see AUTHORS
 License:      see LICENSE
-Last Updated: 06/18/2024
+Last Updated: 02/14/2025
 ******************************************************************************
 */
 
@@ -44,7 +44,6 @@ void saveauxdata(Project *pr, FILE *f)
 {
     int sect, newsect;
     char *tok;
-    char write;
     char line[MAXLINE + 1];
     char s[MAXLINE + 1];
     FILE *InFile = pr->parser.InFile;
@@ -79,7 +78,6 @@ void saveauxdata(Project *pr, FILE *f)
                 {
                 case _LABELS:
                 case _BACKDROP:
-                case _TAGS:
                     fprintf(f, "\n%s", line);
                 }
             }
@@ -88,22 +86,15 @@ void saveauxdata(Project *pr, FILE *f)
         // Write line of auxilary data to file
         else
         {
-            write = FALSE;
             switch (sect)
             {
-            case _TAGS:
-                if (*tok == ';' ||
-                    (match("NODE", tok) && findnode(&pr->network, strtok(NULL, SEPSTR))) ||
-                    (match("LINK", tok) && findlink(&pr->network, strtok(NULL, SEPSTR))))
-                    write = TRUE;
-                break;
             case _LABELS:
             case _BACKDROP:
-                write = TRUE; break;
+                 fprintf(f, "%s", line);
+                 break;
             default:
                 break;
             }
-            if (write) fprintf(f, "%s", line);
         }
     }
     fclose(InFile);
@@ -519,7 +510,10 @@ int saveinpfile(Project *pr, const char *fname)
             fprintf(f, "\n%s AT %s %s", s, ControlTxt[TIMEOFDAY],
                     clocktime(rpt->Atime, control->Time));
             break;
+            
+          default: continue;
         }
+        if (control->isEnabled == FALSE) fprintf(f, "  DISABLED");
     }
 
     // Write [RULES] section
@@ -529,6 +523,7 @@ int saveinpfile(Project *pr, const char *fname)
     {
         fprintf(f, "\nRULE %s", pr->network.Rule[i].label);
         writerule(pr, f, i);  // see RULES.C
+        if (pr->network.Rule[i].isEnabled == FALSE) fprintf(f, "\nDISABLED");
         fprintf(f, "\n");
     }
 
@@ -830,7 +825,23 @@ int saveinpfile(Project *pr, const char *fname)
         }
         else fprintf(f, "\n %-20sNO",field->Name);
     }
-
+    
+    // Write [TAGS] section
+    fprintf(f, "\n\n");
+    fprintf(f, s_TAGS);
+    fprintf(f, "\n;;%-8s\t%-31s\t%s", "Object", "ID", "Tag");
+    for (i = 1; i <= net->Nnodes; i++)
+    {
+        node = &net->Node[i];
+        if (node->Tag == NULL || strlen(node->Tag) == 0) continue;
+        fprintf(f, "\n %-8s\t%-31s\t%s", "NODE", node->ID, node->Tag);
+    }
+    for (i = 1; i <= net->Nlinks; i++)
+    {
+        link = &net->Link[i];
+        if (link->Tag == NULL || strlen(link->Tag) == 0) continue;
+        fprintf(f, "\n %-8s\t%-31s\t%s", "LINK", link->ID, link->Tag);
+    }
     // Write [COORDINATES] section
     fprintf(f, "\n\n");
     fprintf(f, s_COORDS);
